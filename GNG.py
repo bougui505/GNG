@@ -23,7 +23,7 @@ import scipy.spatial.distance
 import random
 
 class GNG:
-    def __init__(self, inputvectors, max_nodes = 100, metric = 'sqeuclidean', learning_rate = [0.05,0.0006], lambda_value = 300, a_max = 100, alpha_value = 0.5, beta_value = 0.0005, max_iterations=None):
+    def __init__(self, inputvectors, max_nodes = 100, metric = 'sqeuclidean', learning_rate = [0.2,0.006], lambda_value = 100, a_max = 50, alpha_value = 0.5, beta_value = 0.0005, max_iterations=None):
         self.inputvectors = inputvectors
         self.n_input, self.cardinal  = inputvectors.shape
         self.max_nodes = max_nodes
