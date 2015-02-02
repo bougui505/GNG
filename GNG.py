@@ -11,17 +11,21 @@ Thanks!
 
 import numpy
 import scipy.spatial.distance
+import random
 
 class GNG:
-    def __init__(self, inputvectors, max_nodes = 100, metric = 'sqeuclidean', learning_rate = [0.05,0.0006], lambda_value = 300, a_max = 100):
+    def __init__(self, inputvectors, max_nodes = 100, metric = 'sqeuclidean', learning_rate = [0.05,0.0006], lambda_value = 300, a_max = 100, alpha_value = 0.5, beta_value = 0.0005):
         self.inputvectors = inputvectors
         self.n_input, self.cardinal  = inputvectors.shape
         self.max_nodes = max_nodes
+        self.unvisited_nodes = set(range(max_nodes)) # set of unvisited nodes
         self.random_graph()
         self.errors = numpy.zeros(max_nodes) #the error between the BMU and the input vector
         self.metric = metric
         self.learning_rate = learning_rate #learning rate for the winner (BMU) and the neighbors
         self.a_max = a_max # maximal age
+        self.alpha_value = alpha_value # the coefficient of error decreasing in insertion place
+        self.beta_value = beta_value # the global coefficient of error decreasing
 
     def random_graph(self):
         """
@@ -47,22 +51,19 @@ class GNG:
             graph[n1].update({(n2):age})
         except KeyError:
             graph[n1] = {(n2):age}
+            self.unvisited_nodes.remove(n1)
         try:
             graph[n2].update({(n1):age})
         except KeyError:
             graph[n2] = {(n1):age}
+            self.unvisited_nodes.remove(n2)
 
     def get_nodes(self):
         """
         return the list of nodes in a graph
         """
         G = self.graph
-        vertlist = set([])
-        for n1 in G.keys():
-            vertlist.add(n1)
-            for n2 in G[n1].keys():
-                vertlist.add(n2)
-        return list(vertlist)
+        return G.keys()
 
     def findBMU(self, k, return_distance=False):
         """
@@ -93,19 +94,21 @@ class GNG:
     def adapt(self, bmus, k):
         """
         - adapts the weights for bmu and input vector k
-        - modifies the age of the edges
         - creates edge if necessary
+        - modifies the age of the edges
+        - delete edges if their ages are more than a_max
         """
         bmu = bmus[0]
         neighbors = self.graph[bmu].keys()
         self.weights[bmu] += self.learning_rate[0] * (self.inputvectors[k] - self.weights[bmu])
         self.weights[neighbors] += self.learning_rate[1] * (self.inputvectors[k] - self.weights[neighbors])
+        if not self.has_edge(bmus[0], bmus[1]):
+            self.updategraph(bmus[0],bmus[1]) # create the edge if not present
         for i in neighbors:
             self.graph[bmu][i] += 1 # increment age of the edge
-        if self.has_edge(bmus[0], bmus[1]):
-            self.graph[bmus[0]][bmus[1]] = 0 # if the edge already exist set the age to 0
-        else:
-            self.updategraph(bmus[0],bmus[1]) # else create the edge
+            if self.graph[bmu][i] > self.a_max: # delete edge if age is more than a_max
+                self.delete_edge(bmu,i)
+        self.graph[bmus[0]][bmus[1]] = 0 # the edge between the two nearest nodes is set to age 0
 
     def delete_edge(self, n1, n2):
         """
@@ -116,16 +119,37 @@ class GNG:
         del G[n2][n1]
         if G[n1] == {}:
             del G[n1]
+            self.unvisited_nodes.add(n1)
         if G[n2] == {}:
             del G[n2]
+            self.unvisited_nodes.add(n2)
 
     def insert_node(self):
         graph = self.graph
-        u = self.errors.argmax()
-        neighbors = graph[u].keys()
+        u = self.errors.argmax() # node with the largest error
+        neighbors = graph[u].keys() # neighbors of u
         v = neighbors[self.errors[neighbors].argmax()] # neighbor of i with the largest error
-        print v
+        r = min(self.unvisited_nodes) # attribution of an unvisited index to the new node
+        weights[r] = ( weights[u] + weights[v] ) / 2 # attribution of the weights
+        self.updategraph(u,r) # create edge u-r
+        self.updategraph(v,r) # create edge v-r
+        self.delete_edge(u,v) # delete edge u-v
+        self.errors[u] *= self.alpha_value # decrease the error of u
+        self.errors[v] *= self.alpha_value # decrease the error of v
+        self.errors[r] = self.errors[u] # compute the error of r
 
-
-#    def learn():
-
+    def learn():
+        kv = []
+        step = 0
+        while len(self.unvisited_nodes) > 0:
+            if len(kv) > 0:
+                k = kv.pop()
+            else:
+                kv = range(self.n_input)
+                random.shuffle(kv)
+                k = kv.pop()
+            bmus = self.findBMU(k)
+            self.adapt(bmus,k)
+            if step % lambda_value == 0:
+                self.insert_node()
+            self.errors -= self.beta_value * self.errors # decrease globally the error
