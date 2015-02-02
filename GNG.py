@@ -150,8 +150,8 @@ class GNG:
         self.updategraph(u,r) # create edge u-r
         self.updategraph(v,r) # create edge v-r
         self.delete_edge(u,v) # delete edge u-v
-        self.errors[u] *= self.alpha_value # decrease the error of u
-        self.errors[v] *= self.alpha_value # decrease the error of v
+        self.errors[u] = self.alpha_value*self.errors[u] # decrease the error of u
+        self.errors[v] = self.alpha_value*self.errors[v] # decrease the error of v
         self.errors[r] = self.errors[u] # compute the error of r
 
     def learn(self):
@@ -171,8 +171,9 @@ class GNG:
             self.adapt(bmus,k)
             if step % self.lambda_value == 0:
                 self.insert_node()
-            self.errors -= self.beta_value * self.errors # decrease globally the error
+            #self.errors -= self.beta_value * self.errors # decrease globally the error
             step += 1
             pbar.update(step)
         pbar.finish()
         self.weights = self.weights[self.graph.keys()] # remove unattributed weights
+        self.errors = self.errors[self.graph.keys()]
