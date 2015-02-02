@@ -13,12 +13,14 @@ import numpy
 import scipy.spatial.distance
 
 class GNG:
-    def __init__(self, inputvectors, max_node_count=2500, metric='euclidean'):
+    def __init__(self, inputvectors, max_node_count=2500, metric='sqeuclidean', learning_rate=[0.05,0.0006]):
         self.inputvectors = inputvectors
         self.n_input, self.cardinal  = inputvectors.shape
         self.max_node_count = max_node_count
         self.random_graph()
+        self.errors = numpy.zeros(max_node_count)
         self.metric = metric
+        self.learning_rate = learning_rate #learning rate for the winner (BMU) and the neighbors
 
     def random_graph(self):
         """
@@ -41,14 +43,14 @@ class GNG:
         """
         if graph == None:
             graph = self.graph
-        if n1 > n2:
-            n3 = n2
-            n2 = n1
-            n1 = n3
         try:
-            graph[n1].append(n2)
+            graph[n1].add(n2)
         except KeyError:
-            graph[n1] = [n2]
+            graph[n1] = set([n2])
+        try:
+            graph[n2].add(n1)
+        except KeyError:
+            graph[n2] = set([n1])
 
     def get_vertices(self, graph=None):
         """
@@ -69,15 +71,28 @@ class GNG:
 
     def findBMU(self, k, graph=None, return_distance=False):
         """
-        Find the two Best Matching Unit for the input vector number k
+        Find the two Best Matching Unit for the input vector number k and add
+        error for the BMU
         """
         if graph == None:
             graph = self.graph
         vertices = numpy.asarray(self.get_vertices())
         cdist = scipy.spatial.distance.cdist(self.inputvectors[None,k], self.weights[vertices], self.metric)[0]
         indices = cdist.argsort()[:2]
+        indices = vertices[indices]
+        self.errors[indices[0]] += cdist[0]
         if not return_distance:
-            return vertices[indices]
+            return indices
         else:
-            return vertices[indices], cdist[indices]
+            return indices, cdist[indices]
+
+    def adapt(self, bmu, k):
+        """
+        adapt the weights for bmu and input vector k
+        """
+        neighbors = list(self.graph[bmu])
+        self.weights[bmu] += self.learning_rate[0] * (self.inputvectors[k] - self.weights[bmu])
+        self.weights[neighbors] += self.learning_rate[1] * (self.inputvectors[k] - self.weights[neighbors])
+
+#    def learn():
 
