@@ -62,14 +62,14 @@ class GNG:
         """
         graph = self.graph
         try:
-            graph[n1].update({(n2):age})
+            graph[n1].update({n2:age})
         except KeyError:
-            graph[n1] = {(n2):age}
+            graph[n1] = {n2:age}
             self.unvisited_nodes.remove(n1)
         try:
-            graph[n2].update({(n1):age})
+            graph[n2].update({n1:age})
         except KeyError:
-            graph[n2] = {(n1):age}
+            graph[n2] = {n1:age}
             self.unvisited_nodes.remove(n2)
 
     def get_nodes(self):
@@ -134,9 +134,11 @@ class GNG:
         if G[n1] == {}:
             del G[n1]
             self.unvisited_nodes.add(n1)
+            self.errors[n1] = 0
         if G[n2] == {}:
             del G[n2]
             self.unvisited_nodes.add(n2)
+            self.errors[n2] = 0
 
     def insert_node(self):
         graph = self.graph
