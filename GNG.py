@@ -175,3 +175,4 @@ class GNG:
             step += 1
             pbar.update(step)
         pbar.finish()
+        self.weights = self.weights[self.graph.keys()] # remove unattributed weights
