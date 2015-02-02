@@ -9,12 +9,21 @@ Please feel free to use and modify this, but keep the above information.
 Thanks!
 """
 
+def is_interactive():
+    import __main__ as main
+    return not hasattr(main, '__file__')
+
+if is_interactive():
+    import progressbar_notebook as progressbar
+else:
+    import progressbar
+
 import numpy
 import scipy.spatial.distance
 import random
 
 class GNG:
-    def __init__(self, inputvectors, max_nodes = 100, metric = 'sqeuclidean', learning_rate = [0.05,0.0006], lambda_value = 300, a_max = 100, alpha_value = 0.5, beta_value = 0.0005):
+    def __init__(self, inputvectors, max_nodes = 100, metric = 'sqeuclidean', learning_rate = [0.05,0.0006], lambda_value = 300, a_max = 100, alpha_value = 0.5, beta_value = 0.0005, max_iterations=None):
         self.inputvectors = inputvectors
         self.n_input, self.cardinal  = inputvectors.shape
         self.max_nodes = max_nodes
@@ -26,6 +35,11 @@ class GNG:
         self.a_max = a_max # maximal age
         self.alpha_value = alpha_value # the coefficient of error decreasing in insertion place
         self.beta_value = beta_value # the global coefficient of error decreasing
+        self.lambda_value = lambda_value # the frequency of growing steps
+        if max_iterations == None:
+            self.max_iterations = 2*self.n_input
+        else:
+            self.max_iterations = max_iterations
 
     def random_graph(self):
         """
@@ -130,7 +144,7 @@ class GNG:
         neighbors = graph[u].keys() # neighbors of u
         v = neighbors[self.errors[neighbors].argmax()] # neighbor of i with the largest error
         r = min(self.unvisited_nodes) # attribution of an unvisited index to the new node
-        weights[r] = ( weights[u] + weights[v] ) / 2 # attribution of the weights
+        self.weights[r] = ( self.weights[u] + self.weights[v] ) / 2 # attribution of the weights
         self.updategraph(u,r) # create edge u-r
         self.updategraph(v,r) # create edge v-r
         self.delete_edge(u,v) # delete edge u-v
@@ -138,10 +152,13 @@ class GNG:
         self.errors[v] *= self.alpha_value # decrease the error of v
         self.errors[r] = self.errors[u] # compute the error of r
 
-    def learn():
+    def learn(self):
         kv = []
         step = 0
-        while len(self.unvisited_nodes) > 0:
+        widgets = ['Growing Neural Gas: ', progressbar.Percentage(), progressbar.Bar(marker='=',left='[',right=']'), progressbar.ETA()]
+        pbar = progressbar.ProgressBar(widgets=widgets, maxval=self.max_iterations)
+        pbar.start()
+        while len(self.unvisited_nodes) > 0 and step < self.max_iterations:
             if len(kv) > 0:
                 k = kv.pop()
             else:
@@ -150,6 +167,9 @@ class GNG:
                 k = kv.pop()
             bmus = self.findBMU(k)
             self.adapt(bmus,k)
-            if step % lambda_value == 0:
+            if step % self.lambda_value == 0:
                 self.insert_node()
             self.errors -= self.beta_value * self.errors # decrease globally the error
+            step += 1
+            pbar.update(step)
+        pbar.finish()
