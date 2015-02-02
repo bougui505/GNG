@@ -171,7 +171,7 @@ class GNG:
             self.adapt(bmus,k)
             if step % self.lambda_value == 0:
                 self.insert_node()
-            #self.errors -= self.beta_value * self.errors # decrease globally the error
+            self.errors = self.errors - self.beta_value * self.errors # decrease globally the error
             step += 1
             pbar.update(step)
         pbar.finish()
