@@ -118,11 +118,11 @@ class GNG:
         self.weights[neighbors] += self.learning_rate[1] * (self.inputvectors[k] - self.weights[neighbors])
         if not self.has_edge(bmus[0], bmus[1]):
             self.updategraph(bmus[0],bmus[1]) # create the edge if not present
+        self.graph[bmus[0]][bmus[1]] = 0 # the edge between the two nearest nodes is set to age 0
         for i in neighbors:
-            self.graph[bmu][i] += 1 # increment age of the edge
+            self.updategraph(bmu,i, age=self.graph[bmu][i]+1) # increment age of the edge
             if self.graph[bmu][i] > self.a_max: # delete edge if age is more than a_max
                 self.delete_edge(bmu,i)
-        self.graph[bmus[0]][bmus[1]] = 0 # the edge between the two nearest nodes is set to age 0
 
     def delete_edge(self, n1, n2):
         """
