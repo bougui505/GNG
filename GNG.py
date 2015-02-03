@@ -177,6 +177,10 @@ class GNG:
         pbar.finish()
         self.weights = self.weights[self.graph.keys()] # remove unattributed weights
         self.errors = self.errors[self.graph.keys()]
+        print "remove age from graph"
+        self.G = {}
+        for n1 in self.graph.keys():
+            self.G[n1] = self.graph[n1].keys()
 
     def adjacency_matrix(self):
         graph = self.graph
