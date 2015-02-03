@@ -3,7 +3,7 @@
 """
 author: Guillaume Bouvier
 email: guillaume.bouvier@ens-cachan.org
-creation date: 2015 02 02
+creation date: 2015 02 03
 license: GNU GPL
 Please feel free to use and modify this, but keep the above information.
 Thanks!
@@ -88,8 +88,8 @@ class GNG:
         nodes = numpy.asarray(self.get_nodes())
         cdist = scipy.spatial.distance.cdist(self.inputvectors[None,k], self.weights[nodes], self.metric)[0]
         indices = cdist.argsort()[:2]
-        indices = nodes[indices]
-        self.errors[indices[0]] += cdist[0]
+        bmus = nodes[indices]
+        self.errors[bmus[0]] += cdist[indices[0]]
         if not return_distance:
             return indices
         else:
