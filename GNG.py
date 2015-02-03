@@ -192,6 +192,15 @@ class GNG:
                 U[n1][n2] = d
         self.U = U
 
+    def writeSIF(self, graph, outfilename):
+        outfile = open(outfilename, 'w')
+        for n1 in graph.keys():
+            for n2 in graph[n1].keys():
+                d = graph[n1][n2]
+                outfile.write('%d %.4f %d\n'%(n1, d, n2))
+        outfile.close()
+
+
     def adjacency_matrix(self):
         graph = self.graph
         verts = self.get_nodes()
