@@ -177,3 +177,28 @@ class GNG:
         pbar.finish()
         self.weights = self.weights[self.graph.keys()] # remove unattributed weights
         self.errors = self.errors[self.graph.keys()]
+
+    def adjacency_matrix(self):
+        graph = self.graph
+        verts = self.get_nodes()
+        vertdict = {}
+        for i, vert in enumerate(verts):
+            vertdict[vert] = i
+        A = numpy.zeros((len(verts), len(verts)))
+        for n1 in graph.keys():
+            for n2 in graph[n1].keys():
+                i,j = vertdict[n1], vertdict[n2]
+                A[i,j] = 1
+        return A
+
+    def degree_matrix(self):
+        graph = self.graph
+        verts = self.get_nodes()
+        D = numpy.zeros((len(verts), len(verts)))
+        for i, n1 in enumerate(graph.keys()):
+            D[i,i] = len(graph[n1])
+        return D
+
+    def laplacian_matrix(self):
+        L = self.degree_matrix() - self.adjacency_matrix()
+        return L
