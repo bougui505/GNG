@@ -182,6 +182,16 @@ class GNG:
         for n1 in self.graph.keys():
             self.G[n1] = self.graph[n1].keys()
 
+    def ugraph(self):
+        graph = self.graph
+        U = {}
+        for n1 in graph:
+            U[n1] = {}
+            for n2 in graph[n1]:
+                d = scipy.spatial.distance.euclidean(self.weights[n1], self.weights[n2])
+                U[n1][n2] = d
+        self.U = U
+
     def adjacency_matrix(self):
         graph = self.graph
         verts = self.get_nodes()
