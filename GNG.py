@@ -87,13 +87,13 @@ class GNG:
         graph = self.graph
         nodes = numpy.asarray(self.get_nodes())
         cdist = scipy.spatial.distance.cdist(self.inputvectors[None,k], self.weights[nodes], self.metric)[0]
-        indices = cdist.argsort()[:2]
-        bmus = nodes[indices]
+        indices = cdist.argsort()
+        bmus = nodes[indices][:2]
         self.errors[bmus[0]] += cdist[indices[0]]
         if not return_distance:
-            return indices
+            return bmus
         else:
-            return indices, cdist[indices]
+            return bmus, cdist[indices][:2]
 
     def has_edge(self, n1, n2):
         """
