@@ -79,11 +79,14 @@ class GNG:
             graph[n2] = {n1:age}
             self.unvisited_nodes.remove(n2)
 
-    def get_nodes(self):
+    def get_nodes(self, graph = None):
         """
         return the list of nodes in a graph
         """
-        G = self.graph
+        if graph == None:
+            G = self.graph
+        else:
+            G = graph
         return G.keys()
 
     def findBMU(self, k, return_distance=False):
@@ -102,11 +105,12 @@ class GNG:
         else:
             return bmus, cdist[indices][:2]
 
-    def has_edge(self, n1, n2):
+    def has_edge(self, n1, n2, G = None):
         """
         test the existence of a edge n1-n2 in a graph
         """
-        G = self.graph
+        if G == None:
+            G = self.graph
         if G.has_key(n1):
             return G[n1].has_key(n2)
         else:
@@ -131,11 +135,12 @@ class GNG:
             if self.graph[bmu][i] > self.a_max: # delete edge if age is more than a_max
                 self.delete_edge(bmu,i)
 
-    def delete_edge(self, n1, n2):
+    def delete_edge(self, n1, n2, G = None):
         """
         delete an edge n1 -> n2 from a graph
         """
-        G = self.graph
+        if G == None:
+            G = self.graph
         del G[n1][n2]
         del G[n2][n1]
         if G[n1] == {}:
@@ -207,6 +212,37 @@ class GNG:
                 d = scipy.spatial.distance.euclidean(self.weights[n1], self.weights[n2])
                 U[n1][n2] = d
         self.U = U
+
+    def undirected_edges(self, graph=None):
+        """
+        If an edge n1->n2 exists and n2->n1 exists. The function delete n2->n1
+        """
+        if graph == None:
+            G = self.graph
+        else:
+            G = graph
+        for n1 in G.keys():
+            for n2 in G[n1].keys():
+                if self.has_edge(n2, n1, G):
+                    del G[n1][n2]
+        return G
+
+    def write_GML(self, graph, outfilename):
+        outfile = open(outfilename, 'w')
+        graph = self.undirected_edges(graph)
+        outfile.write('graph [\n')
+        outfile.write('directed 0\n')
+        nodes = self.get_nodes()
+        for n in nodes:
+            outfile.write('node [ id %d ]\n'%n)
+        for n1 in graph.keys():
+            for n2 in graph[n1].keys():
+                d = graph[n1][n2]
+#                outfile.write('edge [\nsource %d\ntarget %d\n]\n'%(n1, n2))
+                outfile.write('edge [ source %d target %d weight %.4f ]\n'%(n1, n2, d))
+        outfile.write(']')
+        outfile.close()
+
 
     def writeSIF(self, graph, outfilename):
         outfile = open(outfilename, 'w')
