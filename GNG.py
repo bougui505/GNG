@@ -23,13 +23,11 @@ import scipy.spatial.distance
 import random
 
 class GNG:
-    def __init__(self, inputvectors, max_nodes = 100, metric = 'sqeuclidean', learning_rate = [0.2,0.006], lambda_value = 100, a_max = 50, alpha_value = 0.5, beta_value = 0.0005, max_iterations=None):
+    def __init__(self, inputvectors, max_nodes = 100, metric = 'sqeuclidean', learning_rate = [0.2,0.006], lambda_value = 100, a_max = 50, alpha_value = 0.5, beta_value = 0.0005, max_iterations=None, graph=None):
         self.inputvectors = inputvectors
         self.n_input, self.cardinal  = inputvectors.shape
         self.max_nodes = max_nodes
         self.unvisited_nodes = set(range(max_nodes)) # set of unvisited nodes
-        self.random_graph()
-        self.errors = numpy.zeros(max_nodes) #the error between the BMU and the input vector
         self.metric = metric
         self.learning_rate = learning_rate #learning rate for the winner (BMU) and the neighbors
         self.a_max = a_max # maximal age
@@ -40,6 +38,15 @@ class GNG:
             self.max_iterations = 2*self.n_input
         else:
             self.max_iterations = max_iterations
+        if graph == None:
+            self.random_graph()
+            self.errors = numpy.zeros(max_nodes) #the error between the BMU and the input vector
+        else:
+            npz = numpy.load(graph)
+            self.graph = npz['graph'].item()
+            self.weights = npz['weights']
+            self.errors = npz['errors']
+            self.unvisited_nodes = self.unvisited_nodes - set(self.graph.keys())
 
     def random_graph(self):
         """
