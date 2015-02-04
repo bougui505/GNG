@@ -24,11 +24,14 @@ import random
 
 class GNG:
     def __init__(self, inputvectors, max_nodes = 100, metric = 'sqeuclidean', learning_rate = [0.2,0.006], lambda_value = 100, a_max = 50, alpha_value = 0.5, beta_value = 0.0005, max_iterations=None, graph=None):
+        if metric == 'RMSD':
+            self.metric = lambda A,B: self.align(A,B)[1]
+        else:
+            self.metric = metric
         self.inputvectors = inputvectors
         self.n_input, self.cardinal  = inputvectors.shape
         self.max_nodes = max_nodes
         self.unvisited_nodes = set(range(max_nodes)) # set of unvisited nodes
-        self.metric = metric
         self.learning_rate = learning_rate #learning rate for the winner (BMU) and the neighbors
         self.a_max = a_max # maximal age
         self.alpha_value = alpha_value # the coefficient of error decreasing in insertion place
@@ -47,6 +50,30 @@ class GNG:
             self.weights = npz['weights']
             self.errors = npz['errors']
             self.unvisited_nodes = self.unvisited_nodes - set(self.graph.keys())
+
+    def align(self,A,B):
+        """
+        align coordinates of A on B
+        return: new coordinates of A
+        """
+        N = A.shape[0]
+        A = A.reshape(N/3,3)
+        B = B.reshape(N/3,3)
+        centroid_A = A.mean(axis=0)
+        centroid_B = B.mean(axis=0)
+        AA = A - centroid_A
+        BB = B - centroid_B
+        H = numpy.dot(AA.T, BB)
+        U, S, Vt = numpy.linalg.svd(H)
+        R = numpy.dot(U,Vt)
+        #  change sign of the last vector if needed to assure similar orientation of bases
+        if numpy.linalg.det(R) < 0:
+            Vt[2,:] *= -1
+            R = numpy.dot(U,Vt)
+        trans = centroid_B - centroid_A
+        A = numpy.dot(A,R) + trans
+        RMSD = numpy.sqrt( ( (B - A)**2 ).sum(axis=1).mean() )
+        return A.flatten(), RMSD
 
     def random_graph(self):
         """
@@ -89,14 +116,14 @@ class GNG:
             G = graph
         return G.keys()
 
-    def findBMU(self, k, return_distance=False):
+    def findBMU(self, v, return_distance=False):
         """
         Find the two Best Matching Unit for the input vector number k and add
         error for the BMU
         """
         graph = self.graph
         nodes = numpy.asarray(self.get_nodes())
-        cdist = scipy.spatial.distance.cdist(self.inputvectors[None,k], self.weights[nodes], self.metric)[0]
+        cdist = scipy.spatial.distance.cdist(v[None,:], self.weights[nodes], self.metric)[0]
         indices = cdist.argsort()
         bmus = nodes[indices][:2]
         self.errors[bmus[0]] += cdist[indices[0]]
@@ -116,7 +143,7 @@ class GNG:
         else:
             return False
 
-    def adapt(self, bmus, k):
+    def adapt(self, bmus, v):
         """
         - adapts the weights for bmu and input vector k
         - creates edge if necessary
@@ -125,8 +152,8 @@ class GNG:
         """
         bmu = bmus[0]
         neighbors = self.graph[bmu].keys()
-        self.weights[bmu] += self.learning_rate[0] * (self.inputvectors[k] - self.weights[bmu])
-        self.weights[neighbors] += self.learning_rate[1] * (self.inputvectors[k] - self.weights[neighbors])
+        self.weights[bmu] += self.learning_rate[0] * (v - self.weights[bmu])
+        self.weights[neighbors] += self.learning_rate[1] * (v - self.weights[neighbors])
         if not self.has_edge(bmus[0], bmus[1]):
             self.updategraph(bmus[0],bmus[1]) # create the edge if not present
         self.graph[bmus[0]][bmus[1]] = 0 # the edge between the two nearest nodes is set to age 0
@@ -179,8 +206,11 @@ class GNG:
                 kv = range(self.n_input)
                 random.shuffle(kv)
                 k = kv.pop()
-            bmus = self.findBMU(k)
-            self.adapt(bmus,k)
+            v = self.inputvectors[k]
+            bmus = self.findBMU(v)
+            if self.metric == 'RMSD':
+                v = self.align(v, self.weight[bmus[0]])[0]
+            self.adapt(bmus,v)
             if step % self.lambda_value == 0:
                 self.insert_node()
             self.errors = self.errors - self.beta_value * self.errors # decrease globally the error
