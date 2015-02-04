@@ -3,7 +3,7 @@
 """
 author: Guillaume Bouvier
 email: guillaume.bouvier@ens-cachan.org
-creation date: 2015 02 03
+creation date: 2015 02 04
 license: GNU GPL
 Please feel free to use and modify this, but keep the above information.
 Thanks!
@@ -181,6 +181,15 @@ class GNG:
         self.G = {}
         for n1 in self.graph.keys():
             self.G[n1] = self.graph[n1].keys()
+        outfilename = 'gng.npz'
+        print "saving data in %s"%outfilename
+        self.save_data(outfile='%s'%outfilename)
+
+    def save_data(self, outfile='gng.npz', **kwargs):
+        data = {'graph': self.graph, 'weights':self.weights, 'errors':self.errors}
+        for key, value in kwargs.iteritems():
+            data[key] = value
+        numpy.savez(outfile, **data)
 
     def ugraph(self):
         graph = self.graph
