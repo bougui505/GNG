@@ -228,13 +228,17 @@ class GNG:
         return G
 
     def write_GML(self, graph, outfilename):
+        """
+        write gml file for ugraph
+        """
         outfile = open(outfilename, 'w')
-        graph = self.undirected_edges(graph)
         outfile.write('graph [\n')
         outfile.write('directed 0\n')
         nodes = self.get_nodes()
         for n in nodes:
-            outfile.write('node [ id %d ]\n'%n)
+            mean_d = numpy.mean(graph[n].values())
+            outfile.write('node [ id %d weight %.4f ]\n'%(n,mean_d))
+        graph = self.undirected_edges(graph)
         for n1 in graph.keys():
             for n2 in graph[n1].keys():
                 d = graph[n1][n2]
