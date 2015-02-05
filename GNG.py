@@ -3,7 +3,7 @@
 """
 author: Guillaume Bouvier
 email: guillaume.bouvier@ens-cachan.org
-creation date: 2015 02 04
+creation date: 2015 02 05
 license: GNU GPL
 Please feel free to use and modify this, but keep the above information.
 Thanks!
@@ -21,15 +21,15 @@ else:
 import numpy
 import scipy.spatial.distance
 import random
+import pyRMSD.RMSDCalculator
 
 class GNG:
     def __init__(self, inputvectors, max_nodes = 100, metric = 'sqeuclidean', learning_rate = [0.2,0.006], lambda_value = 100, a_max = 50, alpha_value = 0.5, beta_value = 0.0005, max_iterations=None, graph=None):
-        if metric == 'RMSD':
-            self.metric = lambda A,B: self.align(A,B)[1]
-        else:
-            self.metric = metric
         self.inputvectors = inputvectors
         self.n_input, self.cardinal  = inputvectors.shape
+        if metric == 'RMSD':
+            self.n_atom = self.cardinal / 3
+        self.metric = metric
         self.max_nodes = max_nodes
         self.unvisited_nodes = set(range(max_nodes)) # set of unvisited nodes
         self.learning_rate = learning_rate #learning rate for the winner (BMU) and the neighbors
@@ -123,7 +123,13 @@ class GNG:
         """
         graph = self.graph
         nodes = numpy.asarray(self.get_nodes())
-        cdist = scipy.spatial.distance.cdist(v[None,:], self.weights[nodes], self.metric)[0]
+        if self.metric == 'RMSD':
+            fittingCoordsets = self.weights[nodes].reshape(nodes.size, self.n_atom, 3)
+            fittingCoordsets = numpy.r_[v.reshape(1,self.n_atom, 3),fittingCoordsets]
+            calculator = pyRMSD.RMSDCalculator.RMSDCalculator('QCP_OMP_CALCULATOR', fittingCoordsets)
+            cdist = calculator.oneVsTheOthers(0)
+        else:
+            cdist = scipy.spatial.distance.cdist(v[None,:], self.weights[nodes], self.metric)[0]
         indices = cdist.argsort()
         bmus = nodes[indices][:2]
         self.errors[bmus[0]] += cdist[indices[0]]
@@ -209,7 +215,7 @@ class GNG:
             v = self.inputvectors[k]
             bmus = self.findBMU(v)
             if self.metric == 'RMSD':
-                v = self.align(v, self.weight[bmus[0]])[0]
+                v = self.align(v, self.weights[bmus[0]])[0]
             self.adapt(bmus,v)
             if step % self.lambda_value == 0:
                 self.insert_node()
