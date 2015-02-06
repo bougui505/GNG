@@ -3,7 +3,7 @@
 """
 author: Guillaume Bouvier
 email: guillaume.bouvier@ens-cachan.org
-creation date: 2015 02 04
+creation date: 2015 02 06
 license: GNU GPL
 Please feel free to use and modify this, but keep the above information.
 Thanks!
@@ -213,6 +213,38 @@ class GNG:
                 U[n1][n2] = d
         self.U = U
 
+    def get_population(self):
+        """
+        return the index of input data populating each node
+        """
+        print 'Computing population per node...'
+        population = {}
+        for k in range(self.n_input):
+            try:
+                population[self.findBMU(k)[0]].append(k)
+            except KeyError:
+                population[self.findBMU(k)[0]] = [k]
+        self.population = population
+        print 'Population per node stored in self.population dictionnary'
+
+    def project(self, data):
+        """
+        project data onto the nodes. Return a dictionnary with the value of
+        the projection (value) for each node (key)
+        """
+        try:
+            population = self.population
+        except KeyError:
+            self.get_population()
+            population = self.population
+        print "projecting data onto each node..."
+        projection = {}
+        for n in population.keys():
+            projection[n] = numpy.mean(data[population[n]])
+        print "projection stored in self.projection"
+        self.projection = projection
+        return projection
+
     def undirected_edges(self, graph=None):
         """
         If an edge n1->n2 exists and n2->n1 exists. The function delete n2->n1
@@ -227,21 +259,41 @@ class GNG:
                     del G[n1][n2]
         return G
 
-    def write_GML(self, graph, outfilename):
+    def write_GML(self, outfilename, **kwargs):
         """
-        write gml file for ugraph
+        Write gml file for ugraph.
+        
+        **kwargs: data to write for each node.  Typically, these data are
+        obtained from the self.project function. The keys of the kwargs are
+        used as keys in the GML file
         """
+        try:
+            graph = self.U
+        except AttributeError:
+            self.ugraph()
+            graph = self.U
+        try:
+            population = self.population
+        except AttributeError:
+            self.get_population()
+            population = self.population
+        density = {}
+        for n in population.keys():
+            density[n] = len(population[n])
         outfile = open(outfilename, 'w')
         outfile.write('graph [\n')
         outfile.write('directed 0\n')
         nodes = self.get_nodes()
         for n in nodes:
             mean_d = numpy.mean(graph[n].values())
-            outfile.write('node [ id %d weight %.4f ]\n'%(n,mean_d))
-        graph = self.undirected_edges(graph)
-        for n1 in graph.keys():
-            for n2 in graph[n1].keys():
-                d = graph[n1][n2]
+            outfile.write('node [ id %d weight %.4f density %d\n'%(n, mean_d, density[n]))
+            for key in kwargs.keys():
+                outfile.write('%s %.4f\n'%kwargs[key][n])
+            outfile.write(']\n')
+        undirected_graph = self.undirected_edges(graph)
+        for n1 in undirected_graph.keys():
+            for n2 in undirected_graph[n1].keys():
+                d = undirected_graph[n1][n2]
 #                outfile.write('edge [\nsource %d\ntarget %d\n]\n'%(n1, n2))
                 outfile.write('edge [ source %d target %d weight %.4f ]\n'%(n1, n2, d))
         outfile.write(']')
