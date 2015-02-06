@@ -288,7 +288,7 @@ class GNG:
             mean_d = numpy.mean(graph[n].values())
             outfile.write('node [ id %d weight %.4f density %d\n'%(n, mean_d, density[n]))
             for key in kwargs.keys():
-                outfile.write('%s %.4f\n'%kwargs[key][n])
+                outfile.write('%s %.4f\n'%(kwargs[key], kwargs[key][n]))
             outfile.write(']\n')
         undirected_graph = self.undirected_edges(graph)
         for n1 in undirected_graph.keys():
