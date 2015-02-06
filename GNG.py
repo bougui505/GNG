@@ -234,7 +234,7 @@ class GNG:
         """
         try:
             population = self.population
-        except KeyError:
+        except AttributeError:
             self.get_population()
             population = self.population
         print "projecting data onto each node..."
