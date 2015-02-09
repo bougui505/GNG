@@ -257,16 +257,16 @@ class GNG:
         If an edge n1->n2 exists and n2->n1 exists. The function delete n2->n1
         """
         if graph == None:
-            G = self.graph
+            G = self.graph.copy()
         else:
-            G = graph
+            G = graph.copy()
         for n1 in G.keys():
             for n2 in G[n1].keys():
                 if self.has_edge(n2, n1, G):
                     del G[n1][n2]
         return G
 
-    def write_GML(self, outfilename, **kwargs):
+    def write_GML(self, outfilename, community_detection=False, **kwargs):
         """
         Write gml file for ugraph.
         
@@ -284,6 +284,12 @@ class GNG:
         except AttributeError:
             self.get_population()
             population = self.population
+        if community_detection:
+            try:
+                communities = self.communities
+            except AttributeError:
+                self.best_partition()
+                communities = self.communities
         density = {}
         for n in population.keys():
             density[n] = len(population[n])
@@ -297,6 +303,8 @@ class GNG:
                 outfile.write('node [ id %d weight %.4f density %d\n'%(n, mean_d, density[n]))
             except KeyError:
                 outfile.write('node [ id %d weight %.4f density 0\n'%(n, mean_d))
+            if community_detection:
+                outfile.write('community %d\n'%(communities[n]))
             for key in kwargs.keys():
                 try:
                     outfile.write('%s %.4f\n'%(key, kwargs[key][n]))
