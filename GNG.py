@@ -234,6 +234,24 @@ class GNG:
         self.population = population
         print 'Population per node stored in self.population dictionnary'
 
+    def get_medoids(self):
+        """
+        return the index of the medoid for each node
+        """
+        try:
+            population = self.population
+        except AttributeError:
+            self.get_population()
+            population = self.population
+        print 'Computing medoid per node...'
+        medoids = {}
+        for n in population:
+            index = scipy.spatial.distance.squareform(scipy.spatial.distance.pdist(self.inputvectors[population[n]])).mean(axis=0).argmin()
+            medoid = population[n][index]
+            medoids[n] = medoid
+        self.medoids = medoids
+        print 'Medoids stored in self.medoids dictionnary'
+
     def project(self, data):
         """
         project data onto the nodes. Return a dictionnary with the value of
