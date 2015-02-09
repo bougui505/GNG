@@ -3,7 +3,7 @@
 """
 author: Guillaume Bouvier
 email: guillaume.bouvier@ens-cachan.org
-creation date: 2015 02 06
+creation date: 2015 02 09
 license: GNU GPL
 Please feel free to use and modify this, but keep the above information.
 Thanks!
@@ -291,9 +291,9 @@ class GNG:
             except KeyError:
                 outfile.write('node [ id %d weight %.4f density 0\n'%(n, mean_d))
             for key in kwargs.keys():
-        try:
+                try:
                     outfile.write('%s %.4f\n'%(key, kwargs[key][n]))
-        except KeyError:
+                except KeyError:
                     outfile.write('%s 0.0000\n'%key)
             outfile.write(']\n')
         undirected_graph = self.undirected_edges(graph)
