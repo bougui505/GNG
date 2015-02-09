@@ -351,9 +351,11 @@ class GNG:
         """
         perform isomap manifold embedding
         """
+        print 'isomap manifold embedding'
         X = scipy.spatial.distance.squareform(scipy.spatial.distance.pdist(self.weights))
         self.manifold = sklearn.manifold.Isomap()
         self.manifold.fit(X)
+        print 'isomap manifold embedding stored in self.manifold.embedding_'
 
     def best_partition(self):
         print "computing communities maximizing modularity"
