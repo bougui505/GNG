@@ -22,6 +22,8 @@ import numpy
 import scipy.spatial.distance
 import random
 import sklearn.manifold
+import networkx
+import community
 
 class GNG:
     def __init__(self, inputvectors, max_nodes = 100, metric = 'sqeuclidean', learning_rate = [0.2,0.006], lambda_value = 100, a_max = 50, alpha_value = 0.5, beta_value = 0.0005, max_iterations=None, graph=None):
@@ -190,13 +192,17 @@ class GNG:
         pbar.finish()
         self.weights = self.weights[self.graph.keys()] # remove unattributed weights
         self.errors = self.errors[self.graph.keys()]
+        self.delete_age()
+        outfilename = 'gng.npz'
+        print "saving data in %s"%outfilename
+        self.save_data(outfile='%s'%outfilename)
+
+    def delete_age(self):
         print "remove age from graph"
         self.G = {}
         for n1 in self.graph.keys():
             self.G[n1] = self.graph[n1].keys()
-        outfilename = 'gng.npz'
-        print "saving data in %s"%outfilename
-        self.save_data(outfile='%s'%outfilename)
+        print "unweighted graph stored in self.G"
 
     def save_data(self, outfile='gng.npz', **kwargs):
         data = {'graph': self.graph, 'weights':self.weights, 'errors':self.errors}
@@ -348,3 +354,14 @@ class GNG:
         X = scipy.spatial.distance.squareform(scipy.spatial.distance.pdist(self.weights))
         self.manifold = sklearn.manifold.Isomap()
         self.manifold.fit(X)
+
+    def best_partition(self):
+        print "computing communities maximizing modularity"
+        try:
+            G = self.G
+        except AttributeError:
+            self.delete_age()
+            G = self.G
+        gnx = networkx.Graph(G)
+        self.communities = community.best_partition(gnx)
+        print "communities stored in self.communities"
