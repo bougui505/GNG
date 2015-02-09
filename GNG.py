@@ -21,6 +21,7 @@ else:
 import numpy
 import scipy.spatial.distance
 import random
+import sklearn.manifold
 
 class GNG:
     def __init__(self, inputvectors, max_nodes = 100, metric = 'sqeuclidean', learning_rate = [0.2,0.006], lambda_value = 100, a_max = 50, alpha_value = 0.5, beta_value = 0.0005, max_iterations=None, graph=None):
@@ -339,3 +340,11 @@ class GNG:
     def laplacian_matrix(self):
         L = self.degree_matrix() - self.adjacency_matrix()
         return L
+
+    def isomap(self):
+        """
+        perform isomap manifold embedding
+        """
+        X = scipy.spatial.distance.squareform(scipy.spatial.distance.pdist(self.weights))
+        self.manifold = sklearn.manifold.Isomap()
+        self.manifold.fit(X)
