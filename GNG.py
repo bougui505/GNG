@@ -329,11 +329,10 @@ class GNG:
         outfile.write('directed 0\n')
         nodes = self.get_nodes()
         for n in nodes:
-            mean_d = numpy.mean(graph[n].values())
             try:
-                outfile.write('node [ id %d weight %.4f density %d\n'%(n, mean_d, density[n]))
+                outfile.write('node [ id %d density %d\n'%(n, density[n]))
             except KeyError:
-                outfile.write('node [ id %d weight %.4f density 0\n'%(n, mean_d))
+                outfile.write('node [ id %d density 0\n'%(n))
             if community_detection:
                 outfile.write('community %d\n'%(communities[n]))
             if write_medoids:
