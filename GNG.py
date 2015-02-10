@@ -271,13 +271,17 @@ class GNG:
         print 'Computing metamedoid per community...'
         community_ids = list(set(communities.values()))
         metamedoids = {}
+        metamedoid_distances = {}
         for i in community_ids:
             nodes = self.get_nodes_for_community(i)
             index = scipy.spatial.distance.squareform(scipy.spatial.distance.pdist(self.weights[nodes])).mean(axis=0).argmin()
             medoid = nodes[index]
             metamedoids[i] = medoid
+            metamedoid_distances.update( self.dijkstra(medoid, nodes) )
         self.metamedoids = metamedoids
+        self.metamedoid_distances = metamedoid_distances
         print 'Metamedoids stored in self.metamedoids dictionnary'
+        print 'Shortest path distance to the metamedoid stored in self.metamedoid_distances dictionnary'
 
     def project(self, data):
         """
