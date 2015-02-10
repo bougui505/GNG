@@ -24,6 +24,7 @@ import random
 import sklearn.manifold
 import networkx
 import community
+import cPickle
 
 class GNG:
     def __init__(self, inputvectors, max_nodes = 100, metric = 'sqeuclidean', learning_rate = [0.2,0.006], lambda_value = 100, a_max = 50, alpha_value = 0.5, beta_value = 0.0005, max_iterations=None, graph=None):
@@ -45,11 +46,7 @@ class GNG:
             self.random_graph()
             self.errors = numpy.zeros(max_nodes) #the error between the BMU and the input vector
         else:
-            npz = numpy.load(graph)
-            self.graph = npz['graph'].item()
-            self.weights = npz['weights']
-            self.errors = npz['errors']
-            self.unvisited_nodes = self.unvisited_nodes - set(self.graph.keys())
+            self.load_data(infile=graph)
 
     def random_graph(self):
         """
@@ -193,9 +190,7 @@ class GNG:
         self.weights = self.weights[self.graph.keys()] # remove unattributed weights
         self.errors = self.errors[self.graph.keys()]
         self.delete_age()
-        outfilename = 'gng.npz'
-        print "saving data in %s"%outfilename
-        self.save_data(outfile='%s'%outfilename)
+        self.save_data()
 
     def delete_age(self):
         print "remove age from graph"
@@ -204,11 +199,23 @@ class GNG:
             self.G[n1] = self.graph[n1].keys()
         print "unweighted graph stored in self.G"
 
-    def save_data(self, outfile='gng.npz', **kwargs):
-        data = {'graph': self.graph, 'weights':self.weights, 'errors':self.errors}
+    def save_data(self, outfile='gng.dat', **kwargs):
+        print 'saving data in %s'%outfile
+        data = self.__dict__
         for key, value in kwargs.iteritems():
             data[key] = value
-        numpy.savez(outfile, **data)
+        f = open(outfile,'wb')
+        cPickle.dump(data, f, 2)
+        f.close()
+        print 'done'
+
+    def load_data(self, infile='gng.dat'):
+        print 'loading data from %s'%infile
+        f = open(infile,'rb')
+        tmp_dict = cPickle.load(f)
+        f.close()
+        self.__dict__.update(tmp_dict)
+        print 'done'
 
     def ugraph(self):
         graph = self.graph
