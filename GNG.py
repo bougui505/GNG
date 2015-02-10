@@ -259,6 +259,26 @@ class GNG:
         self.medoids = medoids
         print 'Medoids stored in self.medoids dictionnary'
 
+    def get_metamedoid(self):
+        """
+        return the medoid node for each community
+        """
+        try:
+            communities = self.communities
+        except AttributeError:
+            self.best_partition()
+            communities = self.communities
+        print 'Computing metamedoid per community...'
+        community_ids = list(set(communities.values()))
+        metamedoids = {}
+        for i in community_ids:
+            nodes = self.get_nodes_for_community(i)
+            index = scipy.spatial.distance.squareform(scipy.spatial.distance.pdist(self.weights[nodes])).mean(axis=0).argmin()
+            medoid = nodes[index]
+            metamedoids[i] = medoid
+        self.metamedoids = metamedoids
+        print 'Metamedoids stored in self.metamedoids dictionnary'
+
     def project(self, data):
         """
         project data onto the nodes. Return a dictionnary with the value of
