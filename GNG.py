@@ -411,3 +411,28 @@ class GNG:
         gnx = networkx.Graph(G)
         self.communities = community.best_partition(gnx)
         print "communities stored in self.communities"
+
+    def dijkstra(self, start):
+        """
+        computing shortest path from start for each node
+        """
+        graph = self.graph.copy()
+        nodes = self.get_nodes() # nodes to visit
+        cc = start # current cell
+        distances = {}
+        for n in nodes:
+            distances[n] = numpy.inf
+        distances[start] = 0
+        unvisited_cells_distance = distances.copy()
+        visited_cells = set([])
+        while len(visited_cells) < len(nodes):
+            neighbors = set(graph[cc].keys())
+            for n in neighbors - visited_cells:
+                d = distances[cc] + 1
+                if d < distances[n]:
+                    distances[n] = d
+                    unvisited_cells_distance[n] = d
+            unvisited_cells_distance[cc] = numpy.inf # set visited cell distance to inf
+            visited_cells.add(cc)
+            cc = min(unvisited_cells_distance, key=unvisited_cells_distance.get) # cell with the minimum distance
+        return distances
