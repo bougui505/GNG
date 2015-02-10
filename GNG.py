@@ -412,12 +412,24 @@ class GNG:
         self.communities = community.best_partition(gnx)
         print "communities stored in self.communities"
 
-    def dijkstra(self, start):
+    def get_nodes_for_community(self, community_id):
+        """
+        return a list of nodes belonging to the community with id community_id
+        """
+        try:
+            communities = self.communities
+        except AttributeError:
+            self.best_partition()
+            communities = self.communities
+        return [k for k,v in gng.communities.iteritems() if v == community_id]
+
+    def dijkstra(self, start, nodes = None):
         """
         computing shortest path from start for each node
         """
         graph = self.graph.copy()
-        nodes = self.get_nodes() # nodes to visit
+        if nodes == None: # if a subset of nodes is not given
+            nodes = self.get_nodes() # nodes to visit
         cc = start # current cell
         distances = {}
         for n in nodes:
