@@ -315,7 +315,7 @@ class GNG:
                     del G[n1][n2]
         return G
 
-    def write_GML(self, outfilename, community_detection = False, write_medoids = False, **kwargs):
+    def write_GML(self, outfilename, community_detection = True, write_medoids = True, write_metamedoid_distances = True, **kwargs):
         """
         Write gml file for ugraph.
         
@@ -345,6 +345,12 @@ class GNG:
             except AttributeError:
                 self.get_medoids()
                 medoids = self.medoids
+        if write_metamedoid_distances:
+            try:
+                metamedoid_distances = self.metamedoid_distances
+            except AttributeError:
+                self.get_metamedoid()
+                metamedoid_distances = self.metamedoid_distances
         density = {}
         for n in population.keys():
             density[n] = len(population[n])
@@ -365,6 +371,8 @@ class GNG:
                 except KeyError:
                     print "no medoid for node %d"%n
                     pass
+            if write_metamedoid_distances:
+                outfile.write('distance %.4f\n'%numpy.exp(-metamedoid_distances[n]))
             for key in kwargs.keys():
                 try:
                     outfile.write('%s %.4f\n'%(key, kwargs[key][n]))
