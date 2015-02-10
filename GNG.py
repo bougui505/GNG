@@ -438,7 +438,7 @@ class GNG:
         unvisited_cells_distance = distances.copy()
         visited_cells = set([])
         while len(visited_cells) < len(nodes):
-            neighbors = set(graph[cc].keys())
+            neighbors = set(graph[cc].keys()) & set(nodes)
             for n in neighbors - visited_cells:
                 d = distances[cc] + 1
                 if d < distances[n]:
