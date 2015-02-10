@@ -3,7 +3,7 @@
 """
 author: Guillaume Bouvier
 email: guillaume.bouvier@ens-cachan.org
-creation date: 2015 02 09
+creation date: 2015 02 10
 license: GNU GPL
 Please feel free to use and modify this, but keep the above information.
 Thanks!
@@ -284,7 +284,7 @@ class GNG:
                     del G[n1][n2]
         return G
 
-    def write_GML(self, outfilename, community_detection=False, **kwargs):
+    def write_GML(self, outfilename, community_detection = False, write_medoids = False, **kwargs):
         """
         Write gml file for ugraph.
         
@@ -308,6 +308,12 @@ class GNG:
             except AttributeError:
                 self.best_partition()
                 communities = self.communities
+        if write_medoids:
+            try:
+                medoids = self.medoids
+            except AttributeError:
+                self.get_medoids()
+                medoids = self.medoids
         density = {}
         for n in population.keys():
             density[n] = len(population[n])
@@ -323,6 +329,12 @@ class GNG:
                 outfile.write('node [ id %d weight %.4f density 0\n'%(n, mean_d))
             if community_detection:
                 outfile.write('community %d\n'%(communities[n]))
+            if write_medoids:
+                try:
+                    outfile.write('medoid %d\n'%(medoids[n]))
+                except KeyError:
+                    print "no medoid for node %d"%n
+                    pass
             for key in kwargs.keys():
                 try:
                     outfile.write('%s %.4f\n'%(key, kwargs[key][n]))
