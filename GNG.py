@@ -372,7 +372,7 @@ class GNG:
                     print "no medoid for node %d"%n
                     pass
             if write_metamedoid_distances:
-                outfile.write('distance %.4f\n'%numpy.exp(-metamedoid_distances[n]))
+                outfile.write('metamedoid %.4f\n'%numpy.exp(-metamedoid_distances[n]))
             for key in kwargs.keys():
                 try:
                     outfile.write('%s %.4f\n'%(key, kwargs[key][n]))
