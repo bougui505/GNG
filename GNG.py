@@ -421,7 +421,7 @@ class GNG:
         except AttributeError:
             self.best_partition()
             communities = self.communities
-        return [k for k,v in gng.communities.iteritems() if v == community_id]
+        return [k for k,v in communities.iteritems() if v == community_id]
 
     def dijkstra(self, start, nodes = None):
         """
