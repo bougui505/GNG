@@ -323,29 +323,44 @@ class GNG:
         self.medoids = medoids
         print 'Medoids stored in self.medoids dictionnary'
 
-    def get_metamedoid(self):
+    def get_metamedoid(self, kinetic = False):
         """
         return the medoid node for each community
+        if kinetic is true return the metamedoids for kinetic communities
         """
-        try:
-            communities = self.communities
-        except AttributeError:
-            self.best_partition()
-            communities = self.communities
-        print 'Computing metamedoid per community...'
+        if not kinetic:
+            try:
+                communities = self.communities
+            except AttributeError:
+                self.best_partition()
+                communities = self.communities
+            print 'Computing metamedoid per community...'
+        else:
+            try:
+                communities = self.kinetic_communities
+            except AttributeError:
+                self.kinetic_best_partition()
+                communities = self.kinetic_communities
+            print 'Computing metamedoid per kinetic community...'
         community_ids = list(set(communities.values()))
         metamedoids = {}
         metamedoid_distances = {}
         for i in community_ids:
-            nodes = self.get_nodes_for_community(i)
+            nodes = self.get_nodes_for_community(i, kinetic=kinetic)
             index = scipy.spatial.distance.squareform(scipy.spatial.distance.pdist(self.weights[nodes])).mean(axis=0).argmin()
             medoid = nodes[index]
             metamedoids[i] = medoid
             metamedoid_distances.update( self.dijkstra(medoid, nodes) )
-        self.metamedoids = metamedoids
-        self.metamedoid_distances = metamedoid_distances
-        print 'Metamedoids stored in self.metamedoids dictionnary'
-        print 'Shortest path distance to the metamedoid stored in self.metamedoid_distances dictionnary'
+        if not kinetic:
+            self.metamedoids = metamedoids
+            self.metamedoid_distances = metamedoid_distances
+            print 'Metamedoids stored in self.metamedoids dictionnary'
+            print 'Shortest path distance to the metamedoid stored in self.metamedoid_distances dictionnary'
+        else:
+            self.kinetic_metamedoids = metamedoids
+            self.kinetic_metamedoid_distances = metamedoid_distances
+            print 'Kinetic metamedoids stored in self.kinetic_metamedoids dictionnary'
+            print 'Shortest path distance to the kinetic metamedoid stored in self.kinetic_metamedoid_distances dictionnary'
 
     def project(self, data):
         """
@@ -379,7 +394,7 @@ class GNG:
                     del G[n1][n2]
         return G
 
-    def write_GML(self, outfilename, graph = None, directed_graph = False, community_detection = True, write_medoids = True, write_metamedoid_distances = True, write_metastable = False, **kwargs):
+    def write_GML(self, outfilename, graph = None, directed_graph = False, community_detection = True, write_medoids = True, write_metamedoid_distances = True, kinetic = False, write_metastable = False, **kwargs):
         """
         Write gml file for ugraph.
         
@@ -416,6 +431,14 @@ class GNG:
             except AttributeError:
                 self.get_metamedoid()
                 metamedoid_distances = self.metamedoid_distances
+        if kinetic:
+            try:
+                kinetic_communities = self.kinetic_communities
+                kinetic_metamedoids_distances = self.kinetic_metamedoid_distances
+            except AttributeError:
+                self.get_metamedoid(kinetic=True)
+                kinetic_communities = self.kinetic_communities
+                kinetic_metamedoids_distances = self.kinetic_metamedoid_distances
         density = {}
         for n in population.keys():
             density[n] = len(population[n])
@@ -441,6 +464,9 @@ class GNG:
                     pass
             if write_metamedoid_distances:
                 outfile.write('metamedoid %.4f\n'%numpy.exp(-metamedoid_distances[n]))
+            if kinetic:
+                outfile.write('kinetic_community %d\n'%(kinetic_communities[n]))
+                outfile.write('kinetic_metamedoid %.4f\n'%(numpy.exp(-kinetic_metamedoids_distances[n])))
             if write_metastable:
                 outfile.write('metastable_state %d\n'%self.metastable_states[n])
             for key in kwargs.keys():
@@ -461,6 +487,9 @@ class GNG:
                 if community_detection:
                     if communities[n1] == communities[n2]:
                         outfile.write('community %d\n'%communities[n1])
+                if kinetic:
+                    if kinetic_communities[n1] == kinetic_communities[n2]:
+                        outfile.write('kinetic_community %d\n'%kinetic_communities[n1])
                 outfile.write(']\n')
         outfile.write(']')
         outfile.close()
@@ -532,15 +561,22 @@ class GNG:
         self.kinetic_communities = community.best_partition(gnx)
         print 'kinetic communities stored in self.kinetic_communities'
 
-    def get_nodes_for_community(self, community_id):
+    def get_nodes_for_community(self, community_id, kinetic = False):
         """
         return a list of nodes belonging to the community with id community_id
         """
-        try:
-            communities = self.communities
-        except AttributeError:
-            self.best_partition()
-            communities = self.communities
+        if not kinetic:
+            try:
+                communities = self.communities
+            except AttributeError:
+                self.best_partition()
+                communities = self.communities
+        else:
+            try:
+                communities = self.kinetic_communities
+            except AttributeError:
+                self.kinetic_best_partition()
+                communities = self.kinetic_communities
         return [k for k,v in communities.iteritems() if v == community_id]
 
     def dijkstra(self, start, nodes = None):
