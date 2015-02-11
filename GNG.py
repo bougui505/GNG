@@ -257,8 +257,13 @@ class GNG:
             bmus = self.bmus
         print "computing transition network"
         transition_network = {}
+        n = max(bmus.values())
+        transition_matrix = numpy.zeros((n+1,n+1))
+        density = numpy.zeros(n+1)
         for k1, k2 in zip(range(self.n_input), range(lag, self.n_input)):
             bmu1, bmu2 = bmus[k1], bmus[k2]
+            transition_matrix[bmu1,bmu2] += 1
+            density[bmu1] += 1
             if transition_network.has_key(bmu1):
                 if transition_network[bmu1].has_key(bmu2):
                     transition_network[bmu1][bmu2] += 1
@@ -266,8 +271,10 @@ class GNG:
                     transition_network[bmu1].update({bmu2:1})
             else:
                 transition_network.update({bmu1:{bmu2:1}})
+        self.transition_matrix = transition_matrix / density
         self.transition_network = transition_network
         print "transition network stored in self.transition_network dictionnary"
+        print "transition matrix stored in self.transition_matrix array"
 
     def get_medoids(self):
         """
