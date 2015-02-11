@@ -487,7 +487,7 @@ class GNG:
             for n2 in undirected_graph[n1].keys():
                 d = undirected_graph[n1][n2]
 #                outfile.write('edge [\nsource %d\ntarget %d\n]\n'%(n1, n2))
-                outfile.write('edge [ source %d target %d weight %.4f\n'%(n1, n2, d))
+                outfile.write('edge [ source %d target %d weight %.4f age %d\n'%(n1, n2, d, self.graph[n1][n2]))
                 if community_detection:
                     if communities[n1] == communities[n2]:
                         outfile.write('community %d\n'%communities[n1])
