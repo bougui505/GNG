@@ -22,6 +22,7 @@ import numpy
 import scipy.spatial.distance
 import random
 import sklearn.manifold
+import sklearn.cluster
 import networkx
 import community
 import cPickle
@@ -271,10 +272,38 @@ class GNG:
                     transition_network[bmu1].update({bmu2:1})
             else:
                 transition_network.update({bmu1:{bmu2:1}})
+        w, v = numpy.linalg.eig(transition_matrix)
+        w, v = numpy.real(w), numpy.real(v)
+        v = v[:,w.argsort()[::-1]]
+        w = w[w.argsort()[::-1]]
         self.transition_matrix = transition_matrix / density
         self.transition_network = transition_network
+        self.w = w
+        self.v = v
         print "transition network stored in self.transition_network dictionnary"
         print "transition matrix stored in self.transition_matrix array"
+        print "eigenvalues and eigenvectors of the transition matrix stored in self.w and self.v respectively"
+
+    def get_metastable_states(self, k):
+        """
+        define k metastable states from the transition matrix decomposition
+        see: http://bloggb.fr/python/2014/10/21/transition-networks-with-python.html
+        """
+        try:
+            T = self.transition_matrix
+        except AttributeError:
+            self.get_transition_network()
+            T = self.transition_matrix
+        print "computing metastable states from the transition matrix decomposition"
+        proj = numpy.dot(numpy.transpose(T),self.v[:,1:k])
+        kmeans = sklearn.cluster.KMeans(n_clusters=k)
+        kmeans.fit(proj)
+        n = max(self.bmus.values())
+        metastable_states = {}
+        for i in range(n+1):
+            metastable_states[i] = kmeans.labels_[i]
+        self.metastable_states = metastable_states
+        print "metastable states ids stored in self.metastable_states dictionnary"
 
     def get_medoids(self):
         """
@@ -350,7 +379,7 @@ class GNG:
                     del G[n1][n2]
         return G
 
-    def write_GML(self, outfilename, graph = None, directed_graph = False, community_detection = True, write_medoids = True, write_metamedoid_distances = True, **kwargs):
+    def write_GML(self, outfilename, graph = None, directed_graph = False, community_detection = True, write_medoids = True, write_metamedoid_distances = True, write_metastable = False, **kwargs):
         """
         Write gml file for ugraph.
         
@@ -412,6 +441,8 @@ class GNG:
                     pass
             if write_metamedoid_distances:
                 outfile.write('metamedoid %.4f\n'%numpy.exp(-metamedoid_distances[n]))
+            if write_metastable:
+                outfile.write('metastable_state %d\n'%self.metastable_states[n])
             for key in kwargs.keys():
                 try:
                     outfile.write('%s %.4f\n'%(key, kwargs[key][n]))
