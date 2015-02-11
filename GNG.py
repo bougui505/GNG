@@ -354,7 +354,7 @@ class GNG:
             index = scipy.spatial.distance.squareform(scipy.spatial.distance.pdist(self.weights[nodes])).mean(axis=0).argmin()
             medoid = nodes[index]
             metamedoids[i] = medoid
-            metamedoid_distances.update( self.dijkstra(medoid, nodes) )
+            metamedoid_distances.update( self.dijkstra(medoid, nodes, kinetic=kinetic) )
         if not kinetic:
             self.metamedoids = metamedoids
             self.metamedoid_distances = metamedoid_distances
@@ -583,11 +583,14 @@ class GNG:
                 communities = self.kinetic_communities
         return [k for k,v in communities.iteritems() if v == community_id]
 
-    def dijkstra(self, start, nodes = None):
+    def dijkstra(self, start, nodes = None, kinetic = False):
         """
         computing shortest path from start for each node
         """
-        graph = self.graph.copy()
+        if not kinetic:
+            graph = self.graph.copy()
+        else:
+            graph = self.transition_network.copy()
         if nodes == None: # if a subset of nodes is not given
             nodes = self.get_nodes() # nodes to visit
         cc = start # current cell
