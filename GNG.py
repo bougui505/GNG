@@ -25,29 +25,29 @@ import sklearn.manifold
 import sklearn.cluster
 import networkx
 import community
-import cPickle
+import pickle
 
 class GNG:
-    def __init__(self, inputvectors, max_nodes = 100, metric = 'sqeuclidean', learning_rate = [0.2,0.006], lambda_value = 100, a_max = 50, alpha_value = 0.5, beta_value = 0.0005, max_iterations=None, graph=None):
-        self.inputvectors = inputvectors
-        self.n_input, self.cardinal  = inputvectors.shape
-        self.max_nodes = max_nodes
-        self.unvisited_nodes = set(range(max_nodes)) # set of unvisited nodes
-        self.metric = metric
-        self.learning_rate = learning_rate #learning rate for the winner (BMU) and the neighbors
-        self.a_max = a_max # maximal age
-        self.alpha_value = alpha_value # the coefficient of error decreasing in insertion place
-        self.beta_value = beta_value # the global coefficient of error decreasing
-        self.lambda_value = lambda_value # the frequency of growing steps
-        if max_iterations == None:
-            self.max_iterations = 2*self.n_input
+    def __init__(self, inputvectors=None, max_nodes = 100, metric = 'sqeuclidean', learning_rate = [0.2,0.006], lambda_value = 100, a_max = 50, alpha_value = 0.5, beta_value = 0.0005, max_iterations=None, data=None):
+        if data == None:
+            self.inputvectors = inputvectors
+            self.n_input, self.cardinal  = inputvectors.shape
+            self.max_nodes = max_nodes
+            self.unvisited_nodes = set(range(max_nodes)) # set of unvisited nodes
+            self.metric = metric
+            self.learning_rate = learning_rate #learning rate for the winner (BMU) and the neighbors
+            self.a_max = a_max # maximal age
+            self.alpha_value = alpha_value # the coefficient of error decreasing in insertion place
+            self.beta_value = beta_value # the global coefficient of error decreasing
+            self.lambda_value = lambda_value # the frequency of growing steps
+            if max_iterations == None:
+                self.max_iterations = 2*self.n_input
+            else:
+                self.max_iterations = max_iterations
+                self.random_graph()
+                self.errors = numpy.zeros(max_nodes) #the error between the BMU and the input vector
         else:
-            self.max_iterations = max_iterations
-        if graph == None:
-            self.random_graph()
-            self.errors = numpy.zeros(max_nodes) #the error between the BMU and the input vector
-        else:
-            self.load_data(infile=graph)
+            self.load_data(infile=data)
 
     def random_graph(self):
         """
@@ -206,14 +206,14 @@ class GNG:
         for key, value in kwargs.iteritems():
             data[key] = value
         f = open(outfile,'wb')
-        cPickle.dump(data, f, 2)
+        pickle.dump(data, f, 2)
         f.close()
         print 'done'
 
     def load_data(self, infile='gng.dat'):
         print 'loading data from %s'%infile
         f = open(infile,'rb')
-        tmp_dict = cPickle.load(f)
+        tmp_dict = pickle.load(f)
         f.close()
         self.__dict__.update(tmp_dict)
         print 'done'
@@ -235,6 +235,9 @@ class GNG:
         print 'Computing population per node...'
         population = {}
         bmus = {}
+        widgets = ['Search for BMUs: ', progressbar.Percentage(), progressbar.Bar(marker='=',left='[',right=']'), progressbar.ETA()]
+        pbar = progressbar.ProgressBar(widgets=widgets, maxval=self.n_input)
+        pbar.start()
         for k in range(self.n_input):
             bmu = self.findBMU(k)[0]
             bmus[k] = bmu
@@ -242,6 +245,8 @@ class GNG:
                 population[bmu].append(k)
             except KeyError:
                 population[bmu] = [k]
+            pbar.update(k)
+        pbar.finish()
         self.population = population
         self.bmus = bmus
         print 'Population per node stored in self.population dictionnary'
