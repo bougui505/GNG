@@ -521,6 +521,17 @@ class GNG:
         self.communities = community.best_partition(gnx)
         print "communities stored in self.communities"
 
+    def kinetic_best_partition(self):
+        try:
+            transition_network = self.transition_network
+        except AttributeError:
+            self.get_transition_network()
+            transition_network = self.transition_network
+        print 'computing communities maximizing modularity from transition network'
+        gnx = networkx.Graph(transition_network)
+        self.kinetic_communities = community.best_partition(gnx)
+        print 'kinetic communities stored in self.kinetic_communities'
+
     def get_nodes_for_community(self, community_id):
         """
         return a list of nodes belonging to the community with id community_id
