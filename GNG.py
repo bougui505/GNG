@@ -343,7 +343,7 @@ class GNG:
                     del G[n1][n2]
         return G
 
-    def write_GML(self, outfilename, community_detection = True, write_medoids = True, write_metamedoid_distances = True, **kwargs):
+    def write_GML(self, outfilename, graph = None, directed_graph = False, community_detection = True, write_medoids = True, write_metamedoid_distances = True, **kwargs):
         """
         Write gml file for ugraph.
         
@@ -351,11 +351,12 @@ class GNG:
         obtained from the self.project function. The keys of the kwargs are
         used as keys in the GML file
         """
-        try:
-            graph = self.U
-        except AttributeError:
-            self.ugraph()
-            graph = self.U
+        if graph == None:
+            try:
+                graph = self.U
+            except AttributeError:
+                self.ugraph()
+                graph = self.U
         try:
             population = self.population
         except AttributeError:
@@ -384,7 +385,10 @@ class GNG:
             density[n] = len(population[n])
         outfile = open(outfilename, 'w')
         outfile.write('graph [\n')
-        outfile.write('directed 0\n')
+        if directed_graph:
+            outfile.write('directed 1\n')
+        else:
+            outfile.write('directed 0\n')
         nodes = self.get_nodes()
         for n in nodes:
             try:
@@ -407,12 +411,15 @@ class GNG:
                 except KeyError:
                     outfile.write('%s 0.0000\n'%key)
             outfile.write(']\n')
-        undirected_graph = self.undirected_edges(graph)
+        if not directed_graph:
+            undirected_graph = self.undirected_edges(graph)
+        else:
+            undirected_graph = graph
         for n1 in undirected_graph.keys():
             for n2 in undirected_graph[n1].keys():
                 d = undirected_graph[n1][n2]
 #                outfile.write('edge [\nsource %d\ntarget %d\n]\n'%(n1, n2))
-                outfile.write('edge [ source %d target %d distance %.4f\n'%(n1, n2, d))
+                outfile.write('edge [ source %d target %d weight %.4f\n'%(n1, n2, d))
                 if community_detection:
                     if communities[n1] == communities[n2]:
                         outfile.write('community %d\n'%communities[n1])
