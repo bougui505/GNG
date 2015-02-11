@@ -3,7 +3,7 @@
 """
 author: Guillaume Bouvier
 email: guillaume.bouvier@ens-cachan.org
-creation date: 2015 02 10
+creation date: 2015 02 11
 license: GNU GPL
 Please feel free to use and modify this, but keep the above information.
 Thanks!
@@ -233,13 +233,41 @@ class GNG:
         """
         print 'Computing population per node...'
         population = {}
+        bmus = {}
         for k in range(self.n_input):
+            bmu = self.findBMU(k)[0]
+            bmus[k] = bmu
             try:
-                population[self.findBMU(k)[0]].append(k)
+                population[bmu].append(k)
             except KeyError:
-                population[self.findBMU(k)[0]] = [k]
+                population[bmu] = [k]
         self.population = population
+        self.bmus = bmus
         print 'Population per node stored in self.population dictionnary'
+        print 'BMUs stored in self.bmus dictionnary'
+
+    def get_transition_network(self, lag=1):
+        """
+        return the transition network
+        """
+        try:
+            bmus = self.bmus
+        except AttributeError:
+            self.get_population()
+            bmus = self.bmus
+        print "computing transition network"
+        transition_network = {}
+        for k1, k2 in zip(range(self.n_input), range(lag, self.n_input)):
+            bmu1, bmu2 = bmus[k1], bmus[k2]
+            if transition_network.has_key(bmu1):
+                if transition_network[bmu1].has_key(bmu2):
+                    transition_network[bmu1][bmu2] += 1
+                else:
+                    transition_network[bmu1].update({bmu2:1})
+            else:
+                transition_network.update({bmu1:{bmu2:1}})
+        self.transition_network = transition_network
+        print "transition network stored in self.transition_network dictionnary"
 
     def get_medoids(self):
         """
@@ -384,7 +412,7 @@ class GNG:
             for n2 in undirected_graph[n1].keys():
                 d = undirected_graph[n1][n2]
 #                outfile.write('edge [\nsource %d\ntarget %d\n]\n'%(n1, n2))
-                outfile.write('edge [ source %d target %d weight %.4f\n'%(n1, n2, d))
+                outfile.write('edge [ source %d target %d distance %.4f\n'%(n1, n2, d))
                 if community_detection:
                     if communities[n1] == communities[n2]:
                         outfile.write('community %d\n'%communities[n1])
