@@ -23,6 +23,7 @@ import scipy.spatial.distance
 import random
 import sklearn.manifold
 import sklearn.cluster
+from sklearn.neighbors import NearestNeighbors
 import networkx
 import community
 import pickle
@@ -235,18 +236,16 @@ class GNG:
         print 'Computing population per node...'
         population = {}
         bmus = {}
-        widgets = ['Search for BMUs: ', progressbar.Percentage(), progressbar.Bar(marker='=',left='[',right=']'), progressbar.ETA()]
-        pbar = progressbar.ProgressBar(widgets=widgets, maxval=self.n_input)
-        pbar.start()
+        nbrs = NearestNeighbors(n_neighbors=1).fit(self.weights)
+        distances, indices = nbrs.kneighbors(self.inputvectors)
+        bmu_list = indices[:,0]
         for k in range(self.n_input):
-            bmu = self.findBMU(k)[0]
+            bmu = bmu_list[k]
             bmus[k] = bmu
             try:
                 population[bmu].append(k)
             except KeyError:
                 population[bmu] = [k]
-            pbar.update(k)
-        pbar.finish()
         self.population = population
         self.bmus = bmus
         print 'Population per node stored in self.population dictionnary'
