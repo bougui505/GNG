@@ -398,7 +398,7 @@ class GNG:
                     del G[n1][n2]
         return G
 
-    def write_GML(self, outfilename, graph = None, directed_graph = False, community_detection = True, write_medoids = True, write_metamedoid_distances = True, kinetic = False, write_metastable = False, **kwargs):
+    def write_GML(self, outfilename, graph = None, directed_graph = False, community_detection = True, write_density = True, write_age = True, write_medoids = True, write_metamedoid_distances = True, kinetic = False, write_metastable = False, **kwargs):
         """
         Write gml file for ugraph.
         
@@ -452,12 +452,14 @@ class GNG:
             outfile.write('directed 1\n')
         else:
             outfile.write('directed 0\n')
-        nodes = self.get_nodes()
+        nodes = self.get_nodes(graph)
         for n in nodes:
-            try:
-                outfile.write('node [ id %d density %d\n'%(n, density[n]))
-            except KeyError:
-                outfile.write('node [ id %d density 0\n'%(n))
+            outfile.write('node [ id %d\n'%n)
+            if write_density:
+                try:
+                    outfile.write('density %d\n'%density[n])
+                except KeyError:
+                    outfile.write('density 0\n'%(n))
             if community_detection:
                 outfile.write('community %d\n'%(communities[n]))
             if write_medoids:
@@ -487,7 +489,9 @@ class GNG:
             for n2 in undirected_graph[n1].keys():
                 d = undirected_graph[n1][n2]
 #                outfile.write('edge [\nsource %d\ntarget %d\n]\n'%(n1, n2))
-                outfile.write('edge [ source %d target %d weight %.4f age %d\n'%(n1, n2, d, self.graph[n1][n2]))
+                outfile.write('edge [ source %d target %d weight %.4f\n'%(n1, n2, d))
+                if write_age:
+                    outfile.write('age %d\n'%self.graph[n1][n2])
                 if community_detection:
                     if communities[n1] == communities[n2]:
                         outfile.write('community %d\n'%communities[n1])
@@ -585,6 +589,31 @@ class GNG:
                 num += population_n1 * self.transition_matrix[n2,n1]
         trans = num / population_c1
         return trans
+
+    def get_markov_chain_model(self):
+        """
+        return the Markov chain model from kinetic communities
+        """
+        try:
+            kinetic_communities = self.kinetic_communities
+        except AttributeError:
+            self.kinetic_best_partition()
+            kinetic_communities = self.kinetic_communities
+        print "Computing Markov chain model from kinetic communities..."
+        c_list = list(set(kinetic_communities.values()))
+        markov_chain = {}
+        for c1 in c_list:
+            for c2 in c_list:
+                rate = self.get_transition_rate(c1,c2)
+                if rate > 0:
+                    if markov_chain.has_key(c1):
+                        markov_chain[c1].update({c2:rate})
+                    else:
+                        markov_chain[c1] = {c2:rate}
+        self.markov_chain = markov_chain
+        print "Markov chain model stored in self.markov_chain"
+        print "Writing Markov chain model in markov_chain.gml file"
+        self.write_GML('markov_chain.gml', graph = markov_chain, directed_graph = True, community_detection = False, write_density=False, write_age = False, write_medoids = False, write_metamedoid_distances = False, kinetic = False, write_metastable = False)
 
     def get_nodes_for_community(self, community_id, kinetic = False):
         """
