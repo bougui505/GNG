@@ -3,7 +3,7 @@
 """
 author: Guillaume Bouvier
 email: guillaume.bouvier@ens-cachan.org
-creation date: 2015 02 11
+creation date: 2015 02 12
 license: GNU GPL
 Please feel free to use and modify this, but keep the above information.
 Thanks!
@@ -564,6 +564,27 @@ class GNG:
         gnx = networkx.Graph(transition_network)
         self.kinetic_communities = community.best_partition(gnx)
         print 'kinetic communities stored in self.kinetic_communities'
+
+    def get_transition_rate(self, c1, c2):
+        """
+        compute the transition rate between two kinetic communities c1 and c2
+        """
+        try:
+            kinetic_communities = self.kinetic_communities
+        except AttributeError:
+            self.kinetic_best_partition()
+            kinetic_communities = self.kinetic_communities
+        nodelist_c1 = [n for n in kinetic_communities if kinetic_communities[n] == c1]
+        nodelist_c2 = [n for n in kinetic_communities if kinetic_communities[n] == c2]
+        num = 0
+        population_c1 = 0
+        for n1 in nodelist_c1:
+            population_n1 = len(self.population[n1])
+            population_c1 += population_n1
+            for n2 in nodelist_c2:
+                num += population_n1 * self.transition_matrix[n2,n1]
+        trans = num / population_c1
+        return trans
 
     def get_nodes_for_community(self, community_id, kinetic = False):
         """
