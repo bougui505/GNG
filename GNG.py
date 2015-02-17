@@ -3,7 +3,7 @@
 """
 author: Guillaume Bouvier
 email: guillaume.bouvier@ens-cachan.org
-creation date: 2015 02 12
+creation date: 2015 02 17
 license: GNU GPL
 Please feel free to use and modify this, but keep the above information.
 Thanks!
@@ -45,8 +45,8 @@ class GNG:
                 self.max_iterations = 2*self.n_input
             else:
                 self.max_iterations = max_iterations
-                self.random_graph()
-                self.errors = numpy.zeros(max_nodes) #the error between the BMU and the input vector
+            self.random_graph()
+            self.errors = numpy.zeros(max_nodes) #the error between the BMU and the input vector
         else:
             self.load_data(infile=data)
 
