@@ -42,7 +42,7 @@ class GNG:
             self.beta_value = beta_value # the global coefficient of error decreasing
             self.lambda_value = lambda_value # the frequency of growing steps
             if max_iterations == None:
-                self.max_iterations = 2*self.n_input
+                self.max_iterations = self.n_input
             else:
                 self.max_iterations = max_iterations
             self.random_graph()
