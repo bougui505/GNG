@@ -668,6 +668,7 @@ class GNG:
         distances[start] = 0
         unvisited_cells_distance = distances.copy()
         visited_cells = set([])
+        i = 0
         while len(visited_cells) < len(nodes):
             neighbors = set(graph[cc].keys()) & set(nodes)
             for n in neighbors - visited_cells:
@@ -677,5 +678,10 @@ class GNG:
                     unvisited_cells_distance[n] = d
             unvisited_cells_distance[cc] = numpy.inf # set visited cell distance to inf
             visited_cells.add(cc)
+            i += 1
+            if i > len(nodes):
+                print "WARNING: maximum number of iteration (%d/%d) reach for Dijkstra algorithm!"%(i,len(nodes))
+                print "WARNING: current cell: %d; number of visited cells: %d"%(cc, len(visited_cells))
+                break
             cc = min(unvisited_cells_distance, key=unvisited_cells_distance.get) # cell with the minimum distance
         return distances
