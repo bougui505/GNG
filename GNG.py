@@ -278,7 +278,7 @@ class GNG:
             transition_matrix[bmu1,bmu2] += 1
             density[bmu1] += 1
             if self.dwell_time != None:
-                modulo = bmu2 % self.dwell_time
+                modulo = k2 % self.dwell_time
             if modulo != 0:
                 if transition_network.has_key(bmu1):
                     if transition_network[bmu1].has_key(bmu2):
