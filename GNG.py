@@ -3,7 +3,7 @@
 """
 author: Guillaume Bouvier
 email: guillaume.bouvier@ens-cachan.org
-creation date: 2015 02 17
+creation date: 2015 02 18
 license: GNU GPL
 Please feel free to use and modify this, but keep the above information.
 Thanks!
@@ -459,7 +459,7 @@ class GNG:
                 try:
                     outfile.write('density %d\n'%density[n])
                 except KeyError:
-                    outfile.write('density 0\n'%(n))
+                    outfile.write('density 0\n')
             if community_detection:
                 outfile.write('community %d\n'%(communities[n]))
             if write_medoids:
@@ -471,8 +471,12 @@ class GNG:
             if write_metamedoid_distances:
                 outfile.write('metamedoid %.4f\n'%numpy.exp(-metamedoid_distances[n]))
             if kinetic:
-                outfile.write('kinetic_community %d\n'%(kinetic_communities[n]))
-                outfile.write('kinetic_metamedoid %.4f\n'%(numpy.exp(-kinetic_metamedoids_distances[n])))
+                try:
+                    outfile.write('kinetic_community %d\n'%(kinetic_communities[n]))
+                    outfile.write('kinetic_metamedoid %.4f\n'%(numpy.exp(-kinetic_metamedoids_distances[n])))
+                except KeyError:
+                    print "no kinetic community for node %d"%n
+                    pass
             if write_metastable:
                 outfile.write('metastable_state %d\n'%self.metastable_states[n])
             for key in kwargs.keys():
@@ -496,8 +500,11 @@ class GNG:
                     if communities[n1] == communities[n2]:
                         outfile.write('community %d\n'%communities[n1])
                 if kinetic:
-                    if kinetic_communities[n1] == kinetic_communities[n2]:
-                        outfile.write('kinetic_community %d\n'%kinetic_communities[n1])
+                    try:
+                        if kinetic_communities[n1] == kinetic_communities[n2]:
+                            outfile.write('kinetic_community %d\n'%kinetic_communities[n1])
+                    except KeyError:
+                        print "no kinetic community for edge %d-%d"%(n1,n2)
                 outfile.write(']\n')
         outfile.write(']')
         outfile.close()
