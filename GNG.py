@@ -29,7 +29,15 @@ import community
 import pickle
 
 class GNG:
-    def __init__(self, inputvectors=None, max_nodes = 100, metric = 'sqeuclidean', learning_rate = [0.2,0.006], lambda_value = 100, a_max = 50, alpha_value = 0.5, beta_value = 0.0005, max_iterations=None, data=None):
+    def __init__(self, inputvectors=None, max_nodes = 100, metric = 'sqeuclidean', learning_rate = [0.2,0.006], lambda_value = 100, a_max = 50, alpha_value = 0.5, beta_value = 0.0005, max_iterations=None, data=None, dwell_time=None):
+        """
+
+        dwell_time: if you use concatenated trajectories the dwell time is the
+        number of steps of the trajectories concatenated. This parameter avoid
+        the creation of connection between nodes at the end of a trajectory and
+        at the beginning of the next one in transition network.
+
+        """
         if data == None:
             self.inputvectors = inputvectors
             self.n_input, self.cardinal  = inputvectors.shape
@@ -47,6 +55,7 @@ class GNG:
                 self.max_iterations = max_iterations
             self.random_graph()
             self.errors = numpy.zeros(max_nodes) #the error between the BMU and the input vector
+            self.dwell_time = dwell_time
         else:
             self.load_data(infile=data)
 
@@ -265,17 +274,21 @@ class GNG:
         n = max(bmus.values())
         transition_matrix = numpy.zeros((n+1,n+1))
         density = numpy.zeros(n+1)
+        modulo = 1
         for k1, k2 in zip(range(self.n_input), range(lag, self.n_input)):
             bmu1, bmu2 = bmus[k1], bmus[k2]
             transition_matrix[bmu1,bmu2] += 1
             density[bmu1] += 1
-            if transition_network.has_key(bmu1):
-                if transition_network[bmu1].has_key(bmu2):
-                    transition_network[bmu1][bmu2] += 1
+            if self.dwell_time != None:
+                modulo = bmu2 % self.dwell_time
+            if modulo != 0:
+                if transition_network.has_key(bmu1):
+                    if transition_network[bmu1].has_key(bmu2):
+                        transition_network[bmu1][bmu2] += 1
+                    else:
+                        transition_network[bmu1].update({bmu2:1})
                 else:
-                    transition_network[bmu1].update({bmu2:1})
-            else:
-                transition_network.update({bmu1:{bmu2:1}})
+                    transition_network.update({bmu1:{bmu2:1}})
         w, v = numpy.linalg.eig(transition_matrix)
         w, v = numpy.real(w), numpy.real(v)
         v = v[:,w.argsort()[::-1]]
