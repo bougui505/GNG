@@ -198,8 +198,6 @@ class GNG:
             step += 1
             pbar.update(step)
         pbar.finish()
-        self.weights = self.weights[self.graph.keys()] # remove unattributed weights
-        self.errors = self.errors[self.graph.keys()]
         self.delete_age()
         self.save_data()
 
