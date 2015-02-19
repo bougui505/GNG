@@ -29,13 +29,16 @@ import community
 import pickle
 
 class GNG:
-    def __init__(self, inputvectors=None, max_nodes = 100, metric = 'sqeuclidean', learning_rate = [0.2,0.006], lambda_value = 100, a_max = 50, alpha_value = 0.5, beta_value = 0.0005, max_iterations=None, data=None, dwell_time=None):
+    def __init__(self, inputvectors=None, max_nodes = 100, metric = 'sqeuclidean', learning_rate = [0.2,0.006], lambda_value = 100, a_max = 50, alpha_value = 0.5, beta_value = 0.0005, max_iterations=None, data=None, dwell_time=None, restart = False):
         """
 
         dwell_time: if you use concatenated trajectories the dwell time is the
         number of steps of the trajectories concatenated. This parameter avoid
         the creation of connection between nodes at the end of a trajectory and
         at the beginning of the next one in transition network.
+
+        restart: if true reload the data necessary to restart a learning with a
+        previous graph
 
         """
         if data == None:
@@ -56,8 +59,42 @@ class GNG:
             self.random_graph()
             self.errors = numpy.zeros(max_nodes) #the error between the BMU and the input vector
             self.dwell_time = dwell_time
-        else:
+        elif not restart:
             self.load_data(infile=data)
+        else:
+            self.inputvectors = inputvectors
+            self.n_input, self.cardinal  = self.inputvectors.shape
+            self.dwell_time = dwell_time
+            self.load_data_for_restart(infile=data)
+
+    def load_data(self, infile='gng.dat'):
+        print 'loading data from %s'%infile
+        f = open(infile,'rb')
+        tmp_dict = pickle.load(f)
+        f.close()
+        self.__dict__.update(tmp_dict)
+        print 'done'
+
+    def load_data_for_restart(self, infile='gng.dat'):
+        print 'loading data from %s for restart'%infile
+        f = open(infile,'rb')
+        tmp_dict = pickle.load(f)
+        f.close()
+        self.max_nodes = tmp_dict['max_nodes']
+        self.unvisited_nodes = tmp_dict['unvisited_nodes']
+        self.metric = tmp_dict['metric']
+        self.learning_rate = tmp_dict['learning_rate']
+        self.a_max = tmp_dict['a_max']
+        self.alpha_value = tmp_dict['alpha_value']
+        self.beta_value = tmp_dict['beta_value']
+        self.lambda_value = tmp_dict['lambda_value']
+        if max_iterations == None:
+            self.max_iterations = self.n_input
+        else:
+            self.max_iterations = max_iterations
+        self.weights = tmp_dict['weights']
+        self.graph = tmp_dict['graph']
+        self.errors = numpy.zeros(self.max_nodes)
 
     def random_graph(self):
         """
@@ -216,14 +253,6 @@ class GNG:
         f = open(outfile,'wb')
         pickle.dump(data, f, 2)
         f.close()
-        print 'done'
-
-    def load_data(self, infile='gng.dat'):
-        print 'loading data from %s'%infile
-        f = open(infile,'rb')
-        tmp_dict = pickle.load(f)
-        f.close()
-        self.__dict__.update(tmp_dict)
         print 'done'
 
     def ugraph(self):
