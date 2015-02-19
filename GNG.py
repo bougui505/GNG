@@ -3,7 +3,7 @@
 """
 author: Guillaume Bouvier
 email: guillaume.bouvier@ens-cachan.org
-creation date: 2015 02 18
+creation date: 2015 02 19
 license: GNU GPL
 Please feel free to use and modify this, but keep the above information.
 Thanks!
@@ -506,7 +506,10 @@ class GNG:
 #                outfile.write('edge [\nsource %d\ntarget %d\n]\n'%(n1, n2))
                 outfile.write('edge [ source %d target %d weight %.4f\n'%(n1, n2, d))
                 if write_age:
-                    outfile.write('age %d\n'%self.graph[n1][n2])
+                    try:
+                        outfile.write('age %d\n'%self.graph[n1][n2])
+                    except KeyError:
+                        pass
                 if community_detection:
                     if communities[n1] == communities[n2]:
                         outfile.write('community %d\n'%communities[n1])
