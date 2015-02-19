@@ -523,7 +523,8 @@ class GNG:
                 try:
                     outfile.write('%s %.4f\n'%(key, kwargs[key][n]))
                 except KeyError:
-                    outfile.write('%s 0.0000\n'%key)
+                    print "no %s for node %d"%(key, n)
+                    pass
             outfile.write(']\n')
         if not directed_graph:
             undirected_graph = self.undirected_edges(graph)
