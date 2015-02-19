@@ -61,9 +61,13 @@ class GNG:
             self.dwell_time = dwell_time
         elif not restart:
             self.load_data(infile=data)
-        else:
+        else: # restart
             self.inputvectors = inputvectors
             self.n_input, self.cardinal  = self.inputvectors.shape
+            if max_iterations == None:
+                self.max_iterations = self.n_input
+            else:
+                self.max_iterations = max_iterations
             self.dwell_time = dwell_time
             self.load_data_for_restart(infile=data)
 
@@ -88,10 +92,6 @@ class GNG:
         self.alpha_value = tmp_dict['alpha_value']
         self.beta_value = tmp_dict['beta_value']
         self.lambda_value = tmp_dict['lambda_value']
-        if max_iterations == None:
-            self.max_iterations = self.n_input
-        else:
-            self.max_iterations = max_iterations
         self.weights = tmp_dict['weights']
         self.graph = tmp_dict['graph']
         self.errors = numpy.zeros(self.max_nodes)
