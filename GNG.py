@@ -3,7 +3,7 @@
 """
 author: Guillaume Bouvier
 email: guillaume.bouvier@ens-cachan.org
-creation date: 2015 02 19
+creation date: 2015 02 24
 license: GNU GPL
 Please feel free to use and modify this, but keep the above information.
 Thanks!
@@ -272,9 +272,14 @@ class GNG:
         print 'Computing population per node...'
         population = {}
         bmus = {}
-        nbrs = NearestNeighbors(n_neighbors=1).fit(self.weights)
-        distances, indices = nbrs.kneighbors(self.inputvectors)
-        bmu_list = indices[:,0]
+        if self.metric == 'sqeuclidean':
+            print 'finding BMUs with sqeuclidean metric...'
+            nbrs = NearestNeighbors(n_neighbors=1).fit(self.weights)
+            distances, indices = nbrs.kneighbors(self.inputvectors)
+            bmu_list = indices[:,0]
+        else:
+            print 'finding BMUs with %s metric...'%self.metric
+            bmu_list = numpy.asarray([self.findBMU(k)[0] for k in range(self.n_input)])
         for k in range(self.n_input):
             bmu = bmu_list[k]
             bmus[k] = bmu
