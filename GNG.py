@@ -273,7 +273,7 @@ class GNG:
         population = {}
         bmus = {}
         if self.metric == 'sqeuclidean':
-            print 'finding BMUs with sqeuclidean metric...'
+            print 'finding BMUs with default sqeuclidean metric and NearestNeighbors search...'
             nbrs = NearestNeighbors(n_neighbors=1).fit(self.weights)
             distances, indices = nbrs.kneighbors(self.inputvectors)
             bmu_list = indices[:,0]
