@@ -3,7 +3,7 @@
 """
 author: Guillaume Bouvier
 email: guillaume.bouvier@ens-cachan.org
-creation date: 2015 02 24
+creation date: 2015 02 26
 license: GNU GPL
 Please feel free to use and modify this, but keep the above information.
 Thanks!
@@ -443,9 +443,11 @@ class GNG:
                     del G[n1][n2]
         return G
 
-    def write_GML(self, outfilename, graph = None, directed_graph = False, community_detection = True, write_density = True, write_age = True, write_medoids = True, write_metamedoid_distances = True, kinetic = False, write_metastable = False, **kwargs):
+    def write_GML(self, outfilename, graph = None, directed_graph = False, community_detection = True, write_density = True, write_age = True, write_medoids = True, write_metamedoid_distances = True, kinetic = False, write_metastable = False, isomap_layout = False, **kwargs):
         """
         Write gml file for ugraph.
+
+        - isomap_layout: embed isomap coordinates of the 2D embedded space in the gml output file
         
         **kwargs: data to write for each node.  Typically, these data are
         obtained from the self.project function. The keys of the kwargs are
@@ -488,6 +490,12 @@ class GNG:
                 self.get_metamedoid(kinetic=True)
                 kinetic_communities = self.kinetic_communities
                 kinetic_metamedoids_distances = self.kinetic_metamedoid_distances
+        if isomap_layout:
+            try:
+                embedding = self.manifold.embedding_
+            except AttributeError:
+                self.isomap()
+                embedding = self.manifold.embedding_
         density = {}
         for n in population.keys():
             density[n] = len(population[n])
@@ -500,6 +508,8 @@ class GNG:
         nodes = self.get_nodes(graph)
         for n in nodes:
             outfile.write('node [ id %d\n'%n)
+            if isomap_layout:
+                outfile.write('graphics [\ncenter [ x %.4f y %.4f ]\n]\n'%tuple(embedding[n]/embedding.max(axis=0)))
             if write_density:
                 try:
                     outfile.write('density %d\n'%density[n])
